@@ -15,7 +15,7 @@
     </a-form>
     <a-divider size="0"></a-divider>
     <a-table
-      :ref="tableRed"
+      :ref="tobleRef"
       :columns="columns"
       :data="dataList"
       :pagination="{
@@ -76,7 +76,7 @@ const tobleRef = ref();
 const searchParams = ref<QuestionQueryRequest>({
   title: "",
   tags: [],
-  pageSize: 2,
+  pageSize: 10,
   current: 1,
 });
 const loadData = async () => {
@@ -96,7 +96,7 @@ onMounted(() => {
 });
 const columns = [
   {
-    title: "提交号",
+    title: "题号",
     dataIndex: "id",
   },
   {
