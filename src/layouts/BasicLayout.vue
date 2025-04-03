@@ -2,16 +2,20 @@
   <div id="basicLayout">
     <a-layout style="min-height: 100vh">
       <a-layout-header class="header">
-        <GlobalHeader></GlobalHeader>
+        <GlobalHeader />
       </a-layout-header>
       <a-layout-content class="content">
         <router-view />
       </a-layout-content>
       <a-layout-footer class="footer">
-        <a href="http://baidu.com" target="_blank">
-          测试页面 by 程序员阿文
-        </a></a-layout-footer
-      >
+        <div class="footer-content">
+          <div class="footer-info">
+            <span>© 2025 WEN </span>
+            <span class="divider">|</span>
+            <span> 在线编程平台</span>
+          </div>
+        </div>
+      </a-layout-footer>
     </a-layout>
   </div>
 </template>
@@ -28,15 +32,15 @@ import GlobalHeader from "@/components/GlobalHeader.vue";
 }
 
 #basicLayout .content {
+  /* 水平方向的渐变背景 */
   background: linear-gradient(to right, #fefefe, #fff);
   margin-bottom: 16px;
   padding: 20px;
 }
 
 #basicLayout .footer {
-  background: #efefef;
-  padding: 14px;
-  position: sticky;
+  background: #f6f9fa;
+  padding: 14px 0;
   bottom: 0;
   right: 0;
   left: 0;

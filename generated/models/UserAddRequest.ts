@@ -3,9 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UserAddRequest = {
-    userAccount?: string;
-    userAvatar?: string;
-    userName?: string;
-    userRole?: string;
+  checkPassword?: string;
+  userAccount?: string;
+  userAvatar?: string;
+  userName?: string;
+  userPassword?: string;
+  userProfile?: string;
+  userRole?: string;
 };
-

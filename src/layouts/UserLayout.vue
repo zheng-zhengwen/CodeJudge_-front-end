@@ -1,6 +1,6 @@
 <template>
   <div id="userLayout">
-    <a-layout style="min-height: 100vh">
+    <a-layout style="min-height: 100vh" class="centered-layout">
       <a-layout-header class="header">
         <a-space>
           <img src="../assets/thisLogo.png" class="logo" />
@@ -11,13 +11,18 @@
         <router-view />
       </a-layout-content>
       <a-layout-footer class="footer">
-        <a href="http://yupi.icu.com" target="_blank"
-          >测试页面 by 程序员阿文</a
-        ></a-layout-footer
-      >
+        <div class="footer-content">
+          <div class="footer-info">
+            <span>© 2025 WEN </span>
+            <span class="divider">|</span>
+            <span> 在线编程平台</span>
+          </div>
+        </div>
+      </a-layout-footer>
     </a-layout>
   </div>
 </template>
+
 <script setup lang="ts"></script>
 <style scoped>
 #userLayout {
@@ -26,8 +31,8 @@
 }
 
 #userLayout .logo {
-  width: 64px;
-  height: 64px;
+  width: 88px;
+  height: 88px;
 }
 
 #userLayout .header {
@@ -40,15 +45,20 @@
 }
 
 #userLayout .footer {
+  background: rgba(246, 249, 250, 0.9);
+
+  padding: 5px 0;
+  color: #666;
   padding: 14px;
   position: sticky;
   bottom: 0;
   right: 0;
   left: 0;
-  text-align: center;
+  backdrop-filter: blur(10px);
 }
 
 #userLayout .title {
+  font-size: 30px;
   font-weight: bold;
   animation: rainbow 5s linear infinite;
   -webkit-background-clip: text;
