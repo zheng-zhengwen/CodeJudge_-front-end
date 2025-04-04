@@ -55,11 +55,9 @@
               </template>
             </template>
           </a-avatar>
-          <!--登录时 鼠标悬停头像显示个人信息和退出登录，未登录时只显示登录 -->
           <template #content>
             <template
-              v-if="loginUser && loginUser.userRole as
-string !== ACCESS_ENUM.NOT_LOGIN"
+              v-if="loginUser && loginUser.userRole as string !== ACCESS_ENUM.NOT_LOGIN"
             >
               <a-doption>
                 <template #icon>
@@ -96,7 +94,8 @@ string !== ACCESS_ENUM.NOT_LOGIN"
       </div>
     </a-col>
   </a-row>
-  <!-- 对话框 -->
+
+  <!-- 个人信息对话框 -->
   <a-modal v-model:visible="visible" @ok="handleOk" :footer="false">
     <template #title>用户简介</template>
     <div>
@@ -111,6 +110,7 @@ string !== ACCESS_ENUM.NOT_LOGIN"
     </a-button>
   </a-modal>
 
+  <!-- 修改个人信息对话框 -->
   <a-modal
     width="30%"
     :visible="visible2"
@@ -122,17 +122,24 @@ string !== ACCESS_ENUM.NOT_LOGIN"
     <div style="text-align: center; margin-bottom: 20px">
       <a-upload
         action="/"
-        :fileList="file ? [file] : []"
         :show-file-list="false"
-        @change="onChange"
         :custom-request="uploadAvatar"
+        accept="image/*"
       >
         <template #upload-button>
           <a-avatar :size="80" shape="circle">
-            <img alt="头像" :src="userInfo?.userAvatar" />
+            <img
+              v-if="userInfo?.userAvatar"
+              alt="头像"
+              :src="userInfo.userAvatar"
+            />
+            <icon-user v-else />
           </a-avatar>
         </template>
       </a-upload>
+      <div style="margin-top: 10px; color: var(--color-text-2)">
+        点击头像更换
+      </div>
     </div>
     <a-form title="个人信息" style="max-width: 360px; margin: 0 auto">
       <a-form-item field="名称" label="名称 :">
@@ -168,7 +175,6 @@ import {
 } from "../../generated";
 import message from "@arco-design/web-vue/es/message";
 import moment from "moment";
-import { FileItem } from "@arco-design/web-vue";
 
 const router = useRouter();
 const store = useStore();
@@ -179,7 +185,6 @@ const visibleRoutes = computed(() => {
     if (item.meta?.hideInMenu) {
       return false;
     }
-    // 根据权限过滤菜单
     if (!checkAccess(store.state.user.loginUser, item.meta?.access as string)) {
       return false;
     }
@@ -190,39 +195,32 @@ const visibleRoutes = computed(() => {
 // 退出登录
 const logout = async () => {
   try {
-    // 1. 调用后端登出接口
     await UserControllerService.userLogoutUsingPost();
-
-    // 2. 清除前端用户状态
     store.commit("user/setLoginUser", {
       userName: "未登录",
       userRole: ACCESS_ENUM.NOT_LOGIN,
       userAvatar: "",
     });
-
-    // 3. 清除本地存储（根据实际存储方式调整）
     localStorage.removeItem("token");
     sessionStorage.clear();
-
-    // 4. 跳转到登录页并刷新
     router.push("/user/login").then(() => {
-      location.reload(); // 确保完全重置状态
+      location.reload();
     });
   } catch (error) {
     message.error("退出登录失败");
   }
 };
+
 // 默认主页
 const selectedKeys = ref(["/"]);
 
-// 新增：窗口宽度和折叠状态
+// 窗口响应式处理
 const windowWidth = ref(window.innerWidth);
-const collapseThreshold = 1000; // 根据实际调整阈值
+const collapseThreshold = 1000;
 const isCollapsed = ref(false);
 const loginUser = store.state.user.loginUser;
 const userAvatar = loginUser.userAvatar;
 
-// 新增：窗口监听
 const handleResize = () => {
   windowWidth.value = window.innerWidth;
   isCollapsed.value = windowWidth.value < collapseThreshold;
@@ -236,9 +234,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", handleResize);
 });
 
-// 路由跳转后，更新激活项（修改此处）
-router.afterEach((to, from, next) => {
-  // 仅在未折叠时更新选中项
+router.afterEach((to) => {
   if (!isCollapsed.value) {
     selectedKeys.value = [to.path];
   }
@@ -248,7 +244,7 @@ const doMenuClick = (key: string) => {
   router.push({
     path: key,
   });
-  selectedKeys.value = [key]; // 点击时无论折叠与否都更新
+  selectedKeys.value = [key];
 };
 
 // 定义背景色变量
@@ -283,67 +279,152 @@ const data = computed(() => {
     },
   ];
 });
-// 弹窗
+
+// 修改个人信息弹窗
 const visible2 = ref(false);
-const userInfo = ref<User>();
+const userInfo = ref<User>({
+  userName: "",
+  userAccount: "",
+  userRole: "",
+  userProfile: "",
+  userAvatar: "",
+});
+const userAvatarImg = ref("");
+
+// const openModalForm = async (userId: any) => {
+//   const res = await UserControllerService.getUserByIdUsingGet(userId);
+//   userInfo.value = res.data;
+//   userAvatarImg.value = res.data?.userAvatar || "";
+//   visible2.value = true;
+// };
 const openModalForm = async (userId: any) => {
   const res = await UserControllerService.getUserByIdUsingGet(userId);
-  userInfo.value = res.data;
+  userInfo.value = {
+    ...res.data,
+    userPassword: "", // 清空密码字段
+  };
+  userAvatarImg.value = res.data?.userAvatar || "";
   visible2.value = true;
 };
-/**
- * 确定修改按钮
- */
-// 从表单中获取的用户头像
-let userAvatarImg = userInfo.value?.userAvatar;
-const handleOk2 = async () => {
-  const res = await UserControllerService.updateUserUsingPost({
-    ...userInfo.value,
-    userAvatar: userAvatarImg,
-  });
-  if (res.code === 0) {
-    message.success("更新成功！");
-    visible2.value = false;
-    location.reload();
-  } else {
-    message.error("更新失败！", res.msg);
-  }
-};
-const closeModel = () => {
-  visible2.value = false;
-};
-const file = ref();
-const onChange = async (_: never, currentFile: FileItem) => {
-  file.value = {
-    ...currentFile,
-  };
-};
-//上传头像
+
 /**
  * 上传头像
  */
-const uploadAvatar = async () => {
-  const res = await FileControllerService.uploadFileUsingPost(file?.value.file);
-  console.log(res);
-  if (res.code === 0) {
-    userAvatarImg = res.data;
-    message.success("上传成功，点击确认即可修改头像");
-  } else {
-    message.error("上传失败！" + res.data);
+const uploadAvatar = async (options: any) => {
+  const file = options.fileItem.file;
+  const userId = loginUser?.id;
+
+  if (!userId) {
+    message.error("用户未登录");
+    return;
   }
+
+  try {
+    if (!file) {
+      message.error("请选择要上传的文件");
+      return;
+    }
+
+    // 检查文件类型
+    if (!file.type.startsWith("image/")) {
+      message.error("请上传图片文件");
+      return;
+    }
+
+    // 检查文件大小 (限制5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      message.error("图片大小不能超过5MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("userId", userId.toString());
+
+    // 根据接口定义调用上传方法
+    const res = await UserControllerService.uploadAvatarUsingPost(
+      file, // Blob类型文件
+      userId // 用户ID
+    );
+
+    if (res.code === 0 && res.data) {
+      userAvatarImg.value = res.data;
+      if (userInfo.value) {
+        userInfo.value.userAvatar = res.data;
+      }
+      message.success("头像上传成功");
+    } else {
+      message.error("头像上传失败：" + (res.message || "未知错误"));
+    }
+  } catch (error: any) {
+    message.error("头像上传失败：" + (error.message || "未知错误"));
+  }
+};
+
+/**
+ * 确定修改按钮
+ */
+// const handleOk2 = async () => {
+//   try {
+//     const res = await UserControllerService.updateUserUsingPost({
+//       ...userInfo.value,
+//       userAvatar: userAvatarImg.value,
+//     });
+//     if (res.code === 0) {
+//       message.success("更新成功！");
+//       // 更新全局用户信息
+//       await store.dispatch("user/getLoginUser");
+//       visible2.value = false;
+//     } else {
+//       message.error("更新失败！" + res.message);
+//     }
+//   } catch (error: any) {
+//     message.error("更新失败：" + error.message);
+//   }
+// };
+/**
+ * 确定修改按钮
+ */
+const handleOk2 = async () => {
+  try {
+    // 创建更新对象，排除空密码
+    const updateData = {
+      ...userInfo.value,
+      userAvatar: userAvatarImg.value,
+    };
+
+    // 如果密码为空，则删除该字段
+    if (!updateData.userPassword) {
+      delete updateData.userPassword;
+    }
+
+    const res = await UserControllerService.updateUserUsingPost(updateData);
+    if (res.code === 0) {
+      message.success("更新成功！");
+      // 更新全局用户信息
+      await store.dispatch("user/getLoginUser");
+      visible2.value = false;
+    } else {
+      message.error("更新失败！" + res.message);
+    }
+  } catch (error: any) {
+    message.error("更新失败：" + error.message);
+  }
+};
+
+const closeModel = () => {
+  visible2.value = false;
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .title-bar {
   display: flex;
-  flex-direction: column; /* 设置主轴方向为垂直方向 */
+  flex-direction: column;
   background-color: #2c6545;
 }
 
 .title {
-  /**color: #444;**/
   font-size: 20px;
   margin-left: 100px;
   font-weight: bold;
@@ -382,18 +463,14 @@ const uploadAvatar = async () => {
 }
 
 .user-info {
-  display: flex; /* 使用 Flexbox 布局 */
-  align-items: center; /* 垂直居中 */
+  display: flex;
+  align-items: center;
   padding: 4px 17px;
 }
 
-#user-avatar {
-  margin-right: 5px; /* 头像和名称之间的间距 */
-}
-
 .user-name {
-  font-size: 14px; /* 调整字体大小 */
-  color: #fff; /* 设置字体颜色为白色以适应背景 */
-  margin-left: 5px; /* 名称和头像之间的间距 */
+  font-size: 14px;
+  color: #fff;
+  margin-left: 5px;
 }
 </style>
