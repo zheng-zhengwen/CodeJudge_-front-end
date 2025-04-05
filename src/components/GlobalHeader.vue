@@ -96,10 +96,16 @@
   </a-row>
 
   <!-- 个人信息对话框 -->
+  <!-- 对话框 -->
   <a-modal v-model:visible="visible" @ok="handleOk" :footer="false">
     <template #title>用户简介</template>
     <div>
-      <a-descriptions size="mini" :data="data" bordered />
+      <a-descriptions
+        size="mini"
+        layout="inline-vertical"
+        :data="data"
+        bordered
+      />
     </div>
     <a-button
       @click="openModalForm(loginUser.id)"
@@ -218,8 +224,10 @@ const selectedKeys = ref(["/"]);
 const windowWidth = ref(window.innerWidth);
 const collapseThreshold = 1000;
 const isCollapsed = ref(false);
-const loginUser = store.state.user.loginUser;
-const userAvatar = loginUser.userAvatar;
+// const loginUser = store.state.user.loginUser;
+// const userAvatar = loginUser.userAvatar;
+const loginUser = computed(() => store.state.user.loginUser);
+const userAvatar = loginUser.value.userAvatar;
 
 const handleResize = () => {
   windowWidth.value = window.innerWidth;
@@ -263,19 +271,19 @@ const data = computed(() => {
   return [
     {
       label: "用户名称",
-      value: loginUser.userName,
+      value: loginUser.value.userName,
     },
     {
       label: "用户id",
-      value: loginUser.id,
+      value: loginUser.value.id,
     },
     {
       label: "简介",
-      value: loginUser.userProfile,
+      value: loginUser.value.userProfile,
     },
     {
       label: "注册时间",
-      value: moment(loginUser.createTime).format("YYYY-MM-DD hh:mm"),
+      value: moment(loginUser.value.createTime).format("YYYY-MM-DD hh:mm"),
     },
   ];
 });
@@ -312,7 +320,7 @@ const openModalForm = async (userId: any) => {
  */
 const uploadAvatar = async (options: any) => {
   const file = options.fileItem.file;
-  const userId = loginUser?.id;
+  const userId = loginUser.value?.id;
 
   if (!userId) {
     message.error("用户未登录");

@@ -48,6 +48,12 @@
               <a-empty description="暂无答案" />
             </template>
           </a-tab-pane>
+          <a-tab-pane key="submits" title="提交记录">
+            <QuestionSubmitList
+              v-if="question?.id"
+              :question-id="question.id"
+            />
+          </a-tab-pane>
           <a-tab-pane key="ai" title="AI 答题">
             <a-card v-if="question" :title="`题目：${question.title}`">
               <template #extra>
@@ -131,6 +137,7 @@ import CodeEditor from "@/components/CodeEditor.vue";
 import MdViewer from "@/components/MdViewer.vue";
 import message from "@arco-design/web-vue/es/message";
 import { eventBus, EventType } from "@/utils/eventBus";
+import QuestionSubmitList from "@/components/QuestionSubmitList.vue";
 
 interface Props {
   id: string;
